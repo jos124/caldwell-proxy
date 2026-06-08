@@ -2,12 +2,23 @@ export default {
   async fetch(request, env) {
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    // Health check - returns worker URL info
+    if (request.method === 'GET') {
+      return new Response(JSON.stringify({ 
+        status: 'ok', 
+        url: request.url,
+        worker: 'caldwell-brief-proxy'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     if (request.method !== 'POST') {
@@ -16,7 +27,6 @@ export default {
 
     try {
       const body = await request.json();
-
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
